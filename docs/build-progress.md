@@ -320,28 +320,59 @@ under two near-simultaneous requests during verification.
 only delivers to the Resend account's own email until a real domain is verified —
 fine for confirming the pipe works, not for real buyer sends yet.
 
-## Database migration: MongoDB → Postgres/Supabase (in progress)
+## Database migration: MongoDB → Postgres/Supabase (code-complete)
 
 A deliberate, explicit decision to move off MongoDB (superseding CLAUDE.md's
 current Stack table, not yet updated to match) onto Supabase Postgres, plus a
-Netlify Functions deploy for the API. Scoped into three phases; only #1 is
-done:
+Netlify Functions deploy for the API. Scoped into three phases; all three are
+now code-complete, none yet live-verified against a real Supabase project:
 
-1. **Done, code-complete, not yet live-verified**: full schema
-   (`apps/api/src/db/schema.sql`), a `pg`-based repository layer
+1. Full schema (`apps/api/src/db/schema.sql`), a `pg`-based repository layer
    (`apps/api/src/repositories/*.repo.js`) replacing every Mongoose model
    one-for-one (same `_id`/camelCase shape returned, so no frontend or
    controller-logic changes needed), every controller/service/job rewired to
-   use it. Blocked on a real `DATABASE_URL` for live verification (schema
-   apply, full curl/Playwright pass, the run-concurrency and duplicate-email
-   regressions, multi-tenant isolation).
-2. **Not started**: make the automation runner async (`POST .../run` returns
-   immediately instead of awaiting the full send loop) — needed regardless of
-   hosting, and before #3 specifically (serverless execution-time limits).
-3. **Not started**: convert the Express API to Netlify Functions; replace the
-   in-process `node-cron` scheduler (a `Map` of live timers, only valid in one
-   long-lived process) with a Netlify Scheduled Function that polls for due
-   automations; fix cross-origin cookie/CORS behavior for the new topology.
+   use it.
+2. The automation runner is now async: `apps/api/src/services/automation/runner.js`
+   splits into `createRun` (one fast `INSERT`, status `queued` — safe to
+   `await` from an HTTP controller even under a tight serverless timeout) and
+   `executeRun`/`drainQueuedRuns` (the actual fetch/match/render/send loop,
+   claimed off the queue one run at a time via `for update skip locked`).
+   `POST .../automations/:id/run` and `/preview` now return `202` with a
+   queued run instead of awaiting the finished one; the frontend polls
+   `GET .../runs/:runId` until the run reaches a terminal status
+   (`apps/web/lib/waitForRun.js`, used by the wizard's preview step and the
+   automation detail page's Run/Preview actions).
+3. The Express API is wrapped as a Netlify Function
+   (`apps/api/netlify/functions/api.js`, via `serverless-http`) served
+   same-origin behind a `/api/*` redirect in `netlify.toml` alongside the
+   Next.js build — same-origin specifically to avoid a `SameSite=None`/CORS
+   rework, since the existing cookie code already just works there. The
+   in-process `node-cron` scheduler (a `Map` of live timers, only valid in
+   one long-lived process) is gone; `apps/api/src/jobs/scheduler.js` now just
+   queues due cron automations, and a Netlify Scheduled Function
+   (`apps/api/netlify/functions/scheduler.js`, every minute) queues +
+   drains — mirrored locally by a plain `setInterval` in `server.js`. A
+   manual "Run now"/"Preview" click also fast-paths the drain via a second,
+   plain HTTP function (`apps/api/netlify/functions/drain.js`, shared-secret
+   gated) since a Scheduled Function has no public URL to call directly.
+   See `docs/netlify-deploy.md` for the full deploy walkthrough.
+
+Two more things surfaced and got fixed in this same pass, not part of the
+original three-phase scope: `express-rate-limit`'s default in-memory store
+would have silently stopped working once the API ran as separate Netlify
+Function invocations instead of one process — replaced with a small
+Postgres-backed store (`apps/api/src/middleware/pgRateLimitStore.js`, a new
+`rate_limit_hits` table, no Redis/new paid add-on). And `node-cron` was still
+imported in `apps/api/src/validators/automation.validators.js` purely for its
+`cron.validate()` string check — replaced with a pure `isValidCronExpression`
+added next to the existing pure `computeNextRunAt` in
+`apps/api/src/utils/cronNext.js`, so the dependency could actually be removed.
+
+Still blocked on a real `DATABASE_URL`/Supabase project for live verification
+(schema apply, full curl/Playwright pass, the widened run-concurrency index,
+duplicate-email regressions, multi-tenant isolation, and a real first Netlify
+deploy to confirm the build/functions/redirect config actually works as
+written — see the "not guessed here" caveats in `docs/netlify-deploy.md`).
 
 A self-review of phase 1 (done before any live DB was available) already
 caught and fixed two real bugs: a realtor `password_hash` column that would

@@ -120,9 +120,10 @@ export async function findAllByRealtor(realtorId) {
   return mapRows(rows);
 }
 
-export async function findAllActiveCron() {
+export async function findDueCron() {
   const { rows } = await query(
-    `select * from automations where status = 'active' and schedule ->> 'mode' = 'cron'`
+    `select * from automations
+     where status = 'active' and schedule ->> 'mode' = 'cron' and next_run_at <= now()`
   );
   return mapRows(rows);
 }

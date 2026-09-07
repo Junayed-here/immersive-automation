@@ -144,9 +144,11 @@ create table automation_runs (
 create index automation_runs_automation_id_created_at_idx on automation_runs (automation_id, created_at desc);
 create index automation_runs_realtor_id_idx on automation_runs (realtor_id);
 -- The direct Postgres equivalent of the Mongo partial unique index that
--- guarded run concurrency: only one 'running' row per automation, enforced
--- atomically by the database, not by an app-level read-then-write check.
-create unique index automation_runs_running_uniq on automation_runs (automation_id) where (status = 'running');
+-- guarded run concurrency: only one queued-or-running row per automation,
+-- enforced atomically by the database, not by an app-level read-then-write
+-- check. Covers 'queued' too (not just 'running') so two rapid "Run now"
+-- clicks can't both queue a run before either starts executing.
+create unique index automation_runs_active_uniq on automation_runs (automation_id) where (status in ('queued', 'running'));
 
 create table deliveries (
   id uuid primary key default gen_random_uuid(),
@@ -175,4 +177,14 @@ create table delivery_listings (
   delivery_id uuid not null references deliveries(id),
   listing_id uuid not null references listings(id),
   primary key (delivery_id, listing_id)
+);
+
+-- Backs PgRateLimitStore (apps/api/src/middleware/pgRateLimitStore.js) -
+-- express-rate-limit's default in-memory store doesn't work once the API
+-- runs as separate Netlify Function invocations instead of one process.
+create table rate_limit_hits (
+  key text not null,
+  window_start timestamptz not null,
+  count integer not null default 1,
+  primary key (key, window_start)
 );

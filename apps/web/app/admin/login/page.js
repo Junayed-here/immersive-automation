@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AuthCard } from '@/components/AuthCard';
 import { Input, Label, FieldError } from '@/components/ui/Input';
@@ -8,7 +8,11 @@ import { Button } from '@/components/ui/Button';
 import { adminApi } from '@/lib/adminApi';
 import { ApiError } from '@/lib/api';
 
-export default function AdminLoginPage() {
+// useSearchParams() opts the page into client-side rendering for whatever
+// uses it, which Next.js requires to sit behind a Suspense boundary (it
+// throws during prerendering otherwise - only surfaces in a production
+// build, not `next dev`) - see the default export below.
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [form, setForm] = useState({ email: '', password: '' });
@@ -58,5 +62,13 @@ export default function AdminLoginPage() {
         </Button>
       </form>
     </AuthCard>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

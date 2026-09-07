@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import cron from 'node-cron';
+import { isValidCronExpression } from '../utils/cronNext.js';
 
 const audienceSchema = z.object({
   type: z.enum(['all', 'zipList', 'buyerIds']),
@@ -41,7 +41,7 @@ const scheduleSchema = z
       .string()
       .nullable()
       .optional()
-      .refine((value) => !value || cron.validate(value), 'Not a valid cron expression.'),
+      .refine((value) => !value || isValidCronExpression(value), 'Not a valid cron expression.'),
     timezone: z.string().nullable().optional(),
   })
   .partial()

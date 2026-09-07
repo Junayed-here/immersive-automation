@@ -27,7 +27,7 @@ When a phase passes acceptance, I will bump this number myself.
 | Layer | Choice |
 |---|---|
 | Backend | Node 20+, Express 4, ESM (`"type": "module"`), **plain JavaScript** (no TypeScript) |
-| DB | MongoDB + Mongoose 8, local, database `listing_automation` |
+| DB | Postgres (Supabase), via `pg` — no ORM. See `apps/api/src/db/schema.sql` |
 | Auth | JWT — httpOnly cookie **and** `Authorization: Bearer` (Bearer is for Postman). Admin-only — see "Post-launch" below |
 | Validation | zod, on every route that accepts a body |
 | Frontend (later) | Next.js App Router, Tailwind, shadcn/ui |
@@ -114,6 +114,18 @@ Learned from real failure modes — do not skip these.
 Superseded. Realtors paste a public Google Sheet link after creating their profile.
 No Google Cloud project, no consent screen, no refresh tokens. See `master-plan.md`
 §4. If you find OAuth references elsewhere in the docs, they are stale — flag them.
+
+---
+
+## Deploy target: Netlify
+
+One Netlify site, git-connected: the Next.js build (`apps/web`) is the main
+build, the Express API (`apps/api`) is wrapped as a Netlify Function and
+reached same-origin via a `/api/*` redirect (`netlify.toml`, repo root) — not
+two separate sites. The automation runner is queue-based (`createRun` +
+`drainQueuedRuns` in `apps/api/src/services/automation/runner.js`) because a
+Netlify Function can't await a long-running send loop or hold an in-process
+cron timer between invocations. Full walkthrough: `docs/netlify-deploy.md`.
 
 ---
 

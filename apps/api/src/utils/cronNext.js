@@ -1,10 +1,11 @@
-// Computes the next fire time for a standard 5-field cron expression by
-// brute-forcing forward minute-by-minute. node-cron (used for the actual
-// scheduling) only validates expressions and applies a timezone internally,
-// it doesn't expose a "next match" query - pulling in a parsing/tz library
-// for this one call wasn't worth a new dependency. Node ships full ICU, so
-// Intl.DateTimeFormat already gives us correct IANA timezone/DST conversion
-// without one.
+// Computes the next fire time (and validates the expression, below) for a
+// standard 5-field cron string by brute-forcing forward minute-by-minute.
+// There's no live scheduling library involved at all anymore (see
+// apps/api/src/jobs/scheduler.js) - a serverless function can't hold one -
+// so this is the only place cron semantics get parsed, and pulling in a
+// parsing/tz library just for that wasn't worth a new dependency. Node ships
+// full ICU, so Intl.DateTimeFormat already gives correct IANA timezone/DST
+// conversion without one.
 
 function parseField(field, min, max) {
   if (field === '*') {
@@ -33,6 +34,34 @@ function parseField(field, min, max) {
     values.add(Number(part));
   });
   return values;
+}
+
+const FIELD_RANGES = [
+  [0, 59],
+  [0, 23],
+  [1, 31],
+  [1, 12],
+  [0, 6],
+];
+
+// Standalone 5-field validity check, reusing parseField so this stays
+// consistent with computeNextRunAt's own parsing - no separate cron library
+// needed just to reject malformed expressions before they're saved.
+export function isValidCronExpression(expression) {
+  if (typeof expression !== 'string') return false;
+  const parts = expression.trim().split(/\s+/);
+  if (parts.length !== 5) return false;
+
+  try {
+    return parts.every((field, i) => {
+      const [min, max] = FIELD_RANGES[i];
+      const values = parseField(field, min, max);
+      if (values.size === 0) return false;
+      return [...values].every((v) => Number.isInteger(v) && v >= min && v <= max);
+    });
+  } catch {
+    return false;
+  }
 }
 
 const WEEKDAY_INDEX = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };

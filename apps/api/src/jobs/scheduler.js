@@ -1,82 +1,55 @@
-import cron from 'node-cron';
 import * as automationsRepo from '../repositories/automations.repo.js';
-import { runAutomation } from '../services/automation/runner.js';
+import { createRun } from '../services/automation/runner.js';
 import { computeNextRunAt } from '../utils/cronNext.js';
 
-const scheduledTasks = new Map();
+// No live timers here - a serverless function can't keep an in-process
+// scheduler alive between invocations. Instead this just queues due runs;
+// apps/api/netlify/functions/scheduler.js (production) and the setInterval
+// in server.js (local dev) both poll this on a fixed cadence, then drain the
+// queue via drainQueuedRuns.
+export async function queueDueCronAutomations() {
+  const due = await automationsRepo.findDueCron();
+  let queued = 0;
 
-async function refreshNextRunAt(automationId) {
-  const automation = await automationsRepo.findByIdUnscoped(automationId);
-  if (!automation || automation.schedule?.mode !== 'cron' || !cron.validate(automation.schedule.cron)) return;
+  // eslint-disable-next-line no-restricted-syntax
+  for (const automation of due) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      await createRun(automation._id, { trigger: 'scheduled' });
+      queued += 1;
+    } catch (err) {
+      // RUN_IN_PROGRESS just means a previous tick's run for this automation
+      // hasn't finished yet - leave next_run_at alone and try again next tick.
+      if (err.code !== 'RUN_IN_PROGRESS') {
+        // eslint-disable-next-line no-console
+        console.error(`queueDueCronAutomations: failed to queue automation ${automation._id}:`, err.message);
+      }
+      // eslint-disable-next-line no-continue
+      continue;
+    }
+
+    // eslint-disable-next-line no-await-in-loop
+    await refreshNextRunAt(automation);
+  }
+
+  return { queued };
+}
+
+async function refreshNextRunAt(automation) {
   const nextRunAt = computeNextRunAt(automation.schedule.cron, new Date(), automation.schedule.timezone);
   await automationsRepo.update(automation.realtorId, automation._id, { nextRunAt });
 }
 
-function startTask(automation) {
-  if (!cron.validate(automation.schedule.cron)) {
-    // eslint-disable-next-line no-console
-    console.error(`Scheduler: invalid cron "${automation.schedule.cron}" on automation ${automation._id} - skipping.`);
-    return;
-  }
-
-  const options = automation.schedule.timezone ? { timezone: automation.schedule.timezone } : undefined;
-  const task = cron.schedule(
-    automation.schedule.cron,
-    () => {
-      runAutomation(automation._id, { trigger: 'scheduled', dryRun: false })
-        .catch((err) => {
-          // eslint-disable-next-line no-console
-          console.error(`Scheduler: run failed for automation ${automation._id}:`, err.message);
-        })
-        .finally(() => refreshNextRunAt(automation._id));
-    },
-    options
-  );
-
-  scheduledTasks.set(String(automation._id), task);
-}
-
-export function unscheduleAutomation(automationId) {
-  const key = String(automationId);
-  const task = scheduledTasks.get(key);
-  if (task) {
-    task.stop();
-    scheduledTasks.delete(key);
-  }
-}
-
 /**
- * Registers (or re-registers) a single automation's cron job based on its
- * current status/schedule, and recomputes/persists nextRunAt so the UI has
- * something accurate to show. Call this any time an automation is created,
- * updated, or deleted so the in-memory schedule stays in sync - not just on
- * boot.
+ * Recomputes and persists next_run_at for one automation - call this any
+ * time an automation's schedule/status changes (create/update) so the UI's
+ * "next run" field and the due-query above stay accurate.
  */
 export async function scheduleAutomation(automation) {
-  unscheduleAutomation(automation._id);
-
   const isCronSchedule = automation.status === 'active' && automation.schedule?.mode === 'cron' && automation.schedule?.cron;
+  const nextRunAt = isCronSchedule ? computeNextRunAt(automation.schedule.cron, new Date(), automation.schedule.timezone) : null;
 
-  if (isCronSchedule) {
-    startTask(automation);
-  }
-
-  const nextRunAt =
-    isCronSchedule && cron.validate(automation.schedule.cron)
-      ? computeNextRunAt(automation.schedule.cron, new Date(), automation.schedule.timezone)
-      : null;
   if (String(automation.nextRunAt || '') !== String(nextRunAt || '')) {
     await automationsRepo.update(automation.realtorId, automation._id, { nextRunAt });
   }
-}
-
-export async function loadScheduledAutomations() {
-  const automations = await automationsRepo.findAllActiveCron();
-  await Promise.all(automations.map(scheduleAutomation));
-  // eslint-disable-next-line no-console
-  console.log(`Scheduler: ${scheduledTasks.size} cron automation(s) loaded.`);
-}
-
-export function getScheduledCount() {
-  return scheduledTasks.size;
 }

@@ -14,6 +14,7 @@ import { MatchRulesEditor, describeMatchRules } from '@/components/MatchRulesEdi
 import { EmailTemplateEditor, describeEmailTemplate } from '@/components/EmailTemplateEditor';
 import { scopedApi } from '@/lib/adminApi';
 import { ApiError } from '@/lib/api';
+import { waitForRunCompletion } from '@/lib/waitForRun';
 
 const STATUS_TONE = { active: 'success', paused: 'copper', draft: 'neutral' };
 const RUN_STATUS_TONE = { completed: 'success', partial: 'copper', failed: 'danger', running: 'verdigris', queued: 'neutral' };
@@ -84,8 +85,9 @@ export default function AutomationDetailPage({ params }) {
     setError('');
     setMessage('');
     try {
-      const data = await scoped.post(`/automations/${automationId}/preview`);
-      setMessage(`Preview complete: ${data.run.stats.buyersMatched} of ${data.run.stats.buyersProcessed} buyer(s) matched, 0 emails sent.`);
+      const { run } = await scoped.post(`/automations/${automationId}/preview`);
+      const { run: finished } = await waitForRunCompletion(scoped, run._id);
+      setMessage(`Preview complete: ${finished.stats.buyersMatched} of ${finished.stats.buyersProcessed} buyer(s) matched, 0 emails sent.`);
       load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Preview failed.');
@@ -99,8 +101,9 @@ export default function AutomationDetailPage({ params }) {
     setError('');
     setMessage('');
     try {
-      const data = await scoped.post(`/automations/${automationId}/run`);
-      setMessage(`Run complete: ${data.run.stats.emailsSent} sent, ${data.run.stats.emailsFailed} failed, ${data.run.stats.emailsSkipped} skipped.`);
+      const { run } = await scoped.post(`/automations/${automationId}/run`);
+      const { run: finished } = await waitForRunCompletion(scoped, run._id);
+      setMessage(`Run complete: ${finished.stats.emailsSent} sent, ${finished.stats.emailsFailed} failed, ${finished.stats.emailsSkipped} skipped.`);
       load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Run failed.');
@@ -157,8 +160,9 @@ export default function AutomationDetailPage({ params }) {
     setModalPreviewing(true);
     try {
       await scoped.patch(`/automations/${automationId}`, { matchRules: draftMatchRules });
-      const data = await scoped.post(`/automations/${automationId}/preview`);
-      setModalPreviewStats(data.run.stats);
+      const { run } = await scoped.post(`/automations/${automationId}/preview`);
+      const { run: finished } = await waitForRunCompletion(scoped, run._id);
+      setModalPreviewStats(finished.stats);
     } catch (err) {
       setModalError(err instanceof ApiError ? err.message : 'Preview failed.');
     } finally {

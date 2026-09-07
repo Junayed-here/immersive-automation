@@ -1,0 +1,24 @@
+# Single Netlify site: apps/web (Next.js) is the main build, apps/api
+# (Express) is wrapped as a Netlify Function and reached same-origin via the
+# /api/* redirect below - see docs/netlify-deploy.md.
+[build]
+  base = "apps/web"
+  command = "npm ci && npm run build && npm ci --prefix ../api"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[functions]
+  directory = "../api/netlify/functions"
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/health"
+  to = "/.netlify/functions/api/health"
+  status = 200

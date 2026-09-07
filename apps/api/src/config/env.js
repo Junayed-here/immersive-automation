@@ -39,6 +39,10 @@ export const env = {
   smtpUser: process.env.SMTP_USER || null,
   smtpPass: process.env.SMTP_PASSWORD || null,
   mailFrom: process.env.MAIL_FROM || 'Listing Bot <noreply@localhost>',
+  // Shared secret between kickDrain() and netlify/functions/drain.js so that
+  // plain HTTP function (unlike the schedule-only scheduler function) isn't
+  // wide open to the public internet. Unused/unchecked locally.
+  internalDrainSecret: process.env.INTERNAL_DRAIN_SECRET || null,
 };
 
 export const isProduction = env.nodeEnv === 'production';

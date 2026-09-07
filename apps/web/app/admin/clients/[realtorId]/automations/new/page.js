@@ -11,6 +11,7 @@ import { AudienceEditor } from '@/components/AudienceEditor';
 import { MatchRulesEditor } from '@/components/MatchRulesEditor';
 import { EmailTemplateEditor } from '@/components/EmailTemplateEditor';
 import { scopedApi } from '@/lib/adminApi';
+import { waitForRunCompletion } from '@/lib/waitForRun';
 
 const STEPS = ['Name & source', 'Audience', 'Match rules', 'Schedule', 'Email template'];
 
@@ -132,8 +133,9 @@ export default function NewAutomationWizard({ params }) {
     setError('');
     try {
       await scoped.patch(`/automations/${automationId}`, { matchRules });
-      const data = await scoped.post(`/automations/${automationId}/preview`);
-      setPreviewStats(data.run.stats);
+      const { run } = await scoped.post(`/automations/${automationId}/preview`);
+      const { run: finished } = await waitForRunCompletion(scoped, run._id);
+      setPreviewStats(finished.stats);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -172,9 +174,9 @@ export default function NewAutomationWizard({ params }) {
     setError('');
     try {
       await scoped.patch(`/automations/${automationId}`, { emailTemplate });
-      const data = await scoped.post(`/automations/${automationId}/preview`);
-      const runDetail = await scoped.get(`/runs/${data.run._id}`);
-      const withHtml = runDetail.deliveries.find((d) => d.renderedHtml);
+      const { run } = await scoped.post(`/automations/${automationId}/preview`);
+      const { deliveries } = await waitForRunCompletion(scoped, run._id);
+      const withHtml = deliveries.find((d) => d.renderedHtml);
       if (withHtml) {
         const html = await scoped.get(`/deliveries/${withHtml._id}/html`);
         setPreviewHtml(html.html);

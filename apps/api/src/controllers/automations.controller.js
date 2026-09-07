@@ -3,8 +3,9 @@ import * as automationRunsRepo from '../repositories/automationRuns.repo.js';
 import * as deliveriesRepo from '../repositories/deliveries.repo.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { ok, fail } from '../utils/respond.js';
-import { runAutomation } from '../services/automation/runner.js';
-import { scheduleAutomation, unscheduleAutomation } from '../jobs/scheduler.js';
+import { createRun } from '../services/automation/runner.js';
+import { kickDrain } from '../utils/kickDrain.js';
+import { scheduleAutomation } from '../jobs/scheduler.js';
 
 export const listAutomations = asyncHandler(async function listAutomations(req, res) {
   const { page = 1, limit = 20 } = req.query;
@@ -35,22 +36,23 @@ export const updateAutomation = asyncHandler(async function updateAutomation(req
 export const deleteAutomation = asyncHandler(async function deleteAutomation(req, res) {
   const automation = await automationsRepo.remove(req.realtorId, req.params.id);
   if (!automation) return fail(res, 404, 'Automation not found.');
-  unscheduleAutomation(automation._id);
   return ok(res, 200, { automation }, 'Automation deleted.');
 });
 
 export const previewAutomation = asyncHandler(async function previewAutomation(req, res) {
   const automation = await automationsRepo.findById(req.realtorId, req.params.id);
   if (!automation) return fail(res, 404, 'Automation not found.');
-  const run = await runAutomation(automation._id, { trigger: 'preview', dryRun: true });
-  return ok(res, 200, { run }, 'Preview complete.');
+  const run = await createRun(automation._id, { trigger: 'preview' });
+  await kickDrain();
+  return ok(res, 202, { run }, 'Preview queued.');
 });
 
 export const runAutomationNow = asyncHandler(async function runAutomationNow(req, res) {
   const automation = await automationsRepo.findById(req.realtorId, req.params.id);
   if (!automation) return fail(res, 404, 'Automation not found.');
-  const run = await runAutomation(automation._id, { trigger: 'manual', dryRun: false });
-  return ok(res, 200, { run }, 'Run complete.');
+  const run = await createRun(automation._id, { trigger: 'manual' });
+  await kickDrain();
+  return ok(res, 202, { run }, 'Run queued.');
 });
 
 export const listRunsForRealtor = asyncHandler(async function listRunsForRealtor(req, res) {
