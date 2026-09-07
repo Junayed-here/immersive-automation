@@ -1,7 +1,19 @@
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 
 dotenv.config();
+
+// On Netlify, esbuild bundles this whole module graph into one output file
+// that physically replaces netlify/functions/<name>.mjs - confirmed live: a
+// deployed run crashed with `ENOENT ... '/data/listings.json'`, proving
+// process.cwd() there is '/', not /var/task as commonly assumed elsewhere.
+// import.meta.url is rewritten by the bundler to that output file's real
+// location though, and every function here (api/drain/scheduler) sits at
+// the same fixed depth under /var/task, so walking up 4 directories from
+// wherever this bundle actually landed reliably reaches the repo root that
+// netlify.toml's `included_files` bundled data/listings.json into.
+const NETLIFY_REPO_ROOT = fileURLToPath(new URL('../../../../', import.meta.url));
 
 const required = ['DATABASE_URL', 'JWT_SECRET', 'LINK_SECRET'];
 
@@ -32,15 +44,11 @@ export const env = {
     process.env.SPREADSHEET_FIXTURES_DIR || '../../data/fixtures'
   ),
   listingsProvider: process.env.LISTINGS_PROVIDER || 'mock',
-  // On Netlify, esbuild bundles everything into one file, so process.cwd()
-  // is the function's own runtime directory (not this package's directory,
-  // which is what MOCK_LISTINGS_PATH is normally relative to) - and a
-  // fs.readFileSync path only exists there at all because netlify.toml's
-  // `included_files` explicitly bundled it, at the fixed location below.
   // MOCK_LISTINGS_PATH (the "point this at listings-real.json for manual
-  // testing" escape hatch) is a local-dev-only concept for the same reason.
+  // testing" escape hatch) is a local-dev-only concept - on Netlify there's
+  // only ever the one bundled file, at NETLIFY_REPO_ROOT (see above).
   mockListingsPath: process.env.NETLIFY
-    ? path.resolve(process.cwd(), 'data/listings.json')
+    ? path.join(NETLIFY_REPO_ROOT, 'data/listings.json')
     : path.resolve(process.cwd(), process.env.MOCK_LISTINGS_PATH || '../../data/listings.json'),
   mailTransport: process.env.MAIL_TRANSPORT || 'smtp',
   smtpHost: process.env.SMTP_HOST || 'localhost',
