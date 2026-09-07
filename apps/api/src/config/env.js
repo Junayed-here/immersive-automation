@@ -3,17 +3,6 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// A deployed run crashed with `ENOENT ... '/data/listings.json'`, proving
-// process.cwd() there is '/', not /var/task as commonly assumed - so that's
-// out. import.meta.url (tried next) also isn't safe: Netlify's bundler
-// doesn't consistently produce ESM output (one deploy wrapped this in a CJS
-// require() shim, where import.meta doesn't exist at all, crashing every
-// request). /var/task is the one constant every AWS-Lambda-based platform
-// (Netlify Functions included) uses as the deployment package root
-// regardless of module format or how esbuild happened to bundle this run -
-// hardcoding it has fewer moving parts than deriving it dynamically.
-const NETLIFY_REPO_ROOT = '/var/task';
-
 const required = ['DATABASE_URL', 'JWT_SECRET', 'LINK_SECRET'];
 
 const missing = required.filter((key) => !process.env[key]);
@@ -45,9 +34,16 @@ export const env = {
   listingsProvider: process.env.LISTINGS_PROVIDER || 'mock',
   // MOCK_LISTINGS_PATH (the "point this at listings-real.json for manual
   // testing" escape hatch) is a local-dev-only concept - on Netlify there's
-  // only ever the one bundled file, at NETLIFY_REPO_ROOT (see above).
-  mockListingsPath: process.env.NETLIFY
-    ? path.join(NETLIFY_REPO_ROOT, 'data/listings.json')
+  // only ever the one bundled file. `process.env.NETLIFY` looked like the
+  // right detection flag but is NOT actually set at function runtime
+  // (confirmed live - it's build-time only); LAMBDA_TASK_ROOT is the real,
+  // AWS-Lambda-guaranteed env var for "where the deployed code root is" -
+  // Netlify Functions run on genuine Lambda underneath, so this is a
+  // platform guarantee, not another guess. netlify.toml's `included_files`
+  // bundles data/listings.json preserving its repo-root-relative path, which
+  // LAMBDA_TASK_ROOT points at directly.
+  mockListingsPath: process.env.LAMBDA_TASK_ROOT
+    ? path.join(process.env.LAMBDA_TASK_ROOT, 'data/listings.json')
     : path.resolve(process.cwd(), process.env.MOCK_LISTINGS_PATH || '../../data/listings.json'),
   mailTransport: process.env.MAIL_TRANSPORT || 'smtp',
   smtpHost: process.env.SMTP_HOST || 'localhost',

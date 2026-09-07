@@ -16,7 +16,13 @@ import { env } from '../config/env.js';
 // Locally, server.js is a long-lived process, so there's no freeze-on-return
 // risk - draining in-process (unawaited) is both simpler and faster.
 export async function kickDrain() {
-  if (process.env.NETLIFY) {
+  // process.env.NETLIFY looked like the right flag but is NOT set at
+  // function runtime (confirmed live - build-time only), so this branch was
+  // silently never taking the Netlify path in production - every "Run now"
+  // click was falling through to the local in-process branch below, which
+  // is exactly the freeze-on-response risk this function exists to avoid.
+  // LAMBDA_TASK_ROOT is a real AWS Lambda runtime guarantee instead.
+  if (process.env.LAMBDA_TASK_ROOT) {
     const base = process.env.URL || '';
     await fetch(`${base}/.netlify/functions/drain`, {
       method: 'POST',
