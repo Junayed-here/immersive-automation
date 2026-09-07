@@ -20,9 +20,11 @@
   node_bundler = "esbuild"
   # The mock listings provider (LISTINGS_PROVIDER=mock) reads this at runtime
   # via fs.readFileSync, not a static import, so esbuild's dependency tracer
-  # won't pick it up on its own - see the NETLIFY branch in
-  # apps/api/src/config/env.js for how this gets found at runtime.
-  included_files = ["../../data/listings.json"]
+  # won't pick it up on its own - see the LAMBDA_TASK_ROOT branch in
+  # apps/api/src/config/env.js for how this gets found at runtime. The real
+  # dataset (328 real Bronx listings, actual ZIP coverage) is what the
+  # deployed site uses - the tiny curated one is a unit-test fixture only.
+  included_files = ["../../data/listings-real.json"]
 
 [[redirects]]
   from = "/api/*"

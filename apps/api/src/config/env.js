@@ -34,16 +34,19 @@ export const env = {
   listingsProvider: process.env.LISTINGS_PROVIDER || 'mock',
   // MOCK_LISTINGS_PATH (the "point this at listings-real.json for manual
   // testing" escape hatch) is a local-dev-only concept - on Netlify there's
-  // only ever the one bundled file. `process.env.NETLIFY` looked like the
-  // right detection flag but is NOT actually set at function runtime
-  // (confirmed live - it's build-time only); LAMBDA_TASK_ROOT is the real,
-  // AWS-Lambda-guaranteed env var for "where the deployed code root is" -
-  // Netlify Functions run on genuine Lambda underneath, so this is a
-  // platform guarantee, not another guess. netlify.toml's `included_files`
-  // bundles data/listings.json preserving its repo-root-relative path, which
-  // LAMBDA_TASK_ROOT points at directly.
+  // only ever the one bundled file, and it's the real dataset (328 actual
+  // Bronx listings) rather than the tiny curated unit-test fixture, so the
+  // deployed site has real ZIP coverage to match real buyers against.
+  // `process.env.NETLIFY` looked like the right detection flag but is NOT
+  // actually set at function runtime (confirmed live - it's build-time
+  // only); LAMBDA_TASK_ROOT is the real, AWS-Lambda-guaranteed env var for
+  // "where the deployed code root is" - Netlify Functions run on genuine
+  // Lambda underneath, so this is a platform guarantee, not another guess.
+  // netlify.toml's `included_files` bundles data/listings-real.json
+  // preserving its repo-root-relative path, which LAMBDA_TASK_ROOT points
+  // at directly.
   mockListingsPath: process.env.LAMBDA_TASK_ROOT
-    ? path.join(process.env.LAMBDA_TASK_ROOT, 'data/listings.json')
+    ? path.join(process.env.LAMBDA_TASK_ROOT, 'data/listings-real.json')
     : path.resolve(process.cwd(), process.env.MOCK_LISTINGS_PATH || '../../data/listings.json'),
   mailTransport: process.env.MAIL_TRANSPORT || 'smtp',
   smtpHost: process.env.SMTP_HOST || 'localhost',
