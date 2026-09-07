@@ -3,7 +3,13 @@
 # /api/* redirect below - see docs/netlify-deploy.md.
 [build]
   base = "apps/web"
-  command = "npm ci && npm run build && npm ci --prefix ../api"
+  # --include=dev overrides npm's own NODE_ENV=production convention, which
+  # otherwise skips devDependencies during `npm ci` - and Netlify sets
+  # NODE_ENV=production for every production build by default (independent
+  # of the NODE_ENV env var we set for the deployed function's own runtime).
+  # Without this, tailwindcss/postcss/autoprefixer/@netlify/plugin-nextjs
+  # never get installed and the Next.js build fails outright.
+  command = "npm ci --include=dev && npm run build && npm ci --prefix ../api --include=dev"
   publish = ".next"
 
 [[plugins]]
