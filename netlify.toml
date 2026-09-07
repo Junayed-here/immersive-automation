@@ -12,6 +12,11 @@
 [functions]
   directory = "../api/netlify/functions"
   node_bundler = "esbuild"
+  # The mock listings provider (LISTINGS_PROVIDER=mock) reads this at runtime
+  # via fs.readFileSync, not a static import, so esbuild's dependency tracer
+  # won't pick it up on its own - see the NETLIFY branch in
+  # apps/api/src/config/env.js for how this gets found at runtime.
+  included_files = ["../../data/listings.json"]
 
 [[redirects]]
   from = "/api/*"

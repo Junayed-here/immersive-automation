@@ -32,7 +32,16 @@ export const env = {
     process.env.SPREADSHEET_FIXTURES_DIR || '../../data/fixtures'
   ),
   listingsProvider: process.env.LISTINGS_PROVIDER || 'mock',
-  mockListingsPath: path.resolve(process.cwd(), process.env.MOCK_LISTINGS_PATH || '../../data/listings.json'),
+  // On Netlify, esbuild bundles everything into one file, so process.cwd()
+  // is the function's own runtime directory (not this package's directory,
+  // which is what MOCK_LISTINGS_PATH is normally relative to) - and a
+  // fs.readFileSync path only exists there at all because netlify.toml's
+  // `included_files` explicitly bundled it, at the fixed location below.
+  // MOCK_LISTINGS_PATH (the "point this at listings-real.json for manual
+  // testing" escape hatch) is a local-dev-only concept for the same reason.
+  mockListingsPath: process.env.NETLIFY
+    ? path.resolve(process.cwd(), 'data/listings.json')
+    : path.resolve(process.cwd(), process.env.MOCK_LISTINGS_PATH || '../../data/listings.json'),
   mailTransport: process.env.MAIL_TRANSPORT || 'smtp',
   smtpHost: process.env.SMTP_HOST || 'localhost',
   smtpPort: Number(process.env.SMTP_PORT) || 1025,

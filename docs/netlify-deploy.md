@@ -113,6 +113,13 @@ Walk the whole flow against the live URL:
 5. Activate it and click **Run now** — confirm a real email arrives via
    Resend (check the inbox on your own Resend account, since
    `onboarding@resend.dev` only delivers there until a domain is verified).
+   With `LISTINGS_PROVIDER=mock`, if step 4's preview fails with an `ENOENT`
+   on `data/listings.json`: `netlify.toml`'s `included_files` bundles that
+   file into the function, and `apps/api/src/config/env.js` assumes it lands
+   at `<function cwd>/data/listings.json` — this exact placement wasn't
+   testable without a live deploy, so check the `api` function's log for the
+   path it actually tried, and adjust the `path.resolve(process.cwd(), ...)`
+   line in the `NETLIFY` branch of `mockListingsPath` (in `env.js`) to match.
 6. Set a cron schedule on an automation and confirm `next_run_at` shows up in
    the UI; you can watch the Netlify Functions log for the `scheduler`
    function firing every minute.
