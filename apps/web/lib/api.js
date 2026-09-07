@@ -1,4 +1,8 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+// `??` (not `||`) so an explicitly-empty value (same-origin production,
+// where the API is reached via a same-site redirect, not a separate host)
+// isn't treated as "unset" and overridden by the localhost default - only a
+// truly missing env var (local dev with no .env) should fall through.
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 export class ApiError extends Error {
   constructor(message, { status, code, details } = {}) {
