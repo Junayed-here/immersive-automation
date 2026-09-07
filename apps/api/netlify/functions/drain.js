@@ -12,6 +12,20 @@ export default async (request) => {
     return new Response('Unauthorized', { status: 401 });
   }
 
+  if (new URL(request.url).searchParams.get('diag') === '1') {
+    return new Response(
+      JSON.stringify({
+        cwd: process.cwd(),
+        NETLIFY: process.env.NETLIFY ?? null,
+        LAMBDA_TASK_ROOT: process.env.LAMBDA_TASK_ROOT ?? null,
+        AWS_LAMBDA_FUNCTION_NAME: process.env.AWS_LAMBDA_FUNCTION_NAME ?? null,
+        AWS_EXECUTION_ENV: process.env.AWS_EXECUTION_ENV ?? null,
+        keys: Object.keys(process.env).sort(),
+      }),
+      { headers: { 'content-type': 'application/json' } }
+    );
+  }
+
   const { processed } = await drainQueuedRuns({ budgetMs: 8000 });
   return new Response(JSON.stringify({ processed }), {
     headers: { 'content-type': 'application/json' },
