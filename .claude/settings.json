@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -X POST http://localhost:4000/api/admin/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"admin@example.com\",\"password\":\"change_me_please\"}' -c /tmp/cookies.txt)",
+      "Bash(node --check src/app.js)"
+    ]
+  }
+}

@@ -1,0 +1,134 @@
+[
+  {
+    "zpid": "2078230001",
+    "address": { "line1": "123 Main St", "city": "Elmhurst", "state": "NY", "zip": "11373" },
+    "price": 485000,
+    "bedrooms": 3, "bathrooms": 2, "livingArea": 1450, "lotSize": 2500,
+    "yearBuilt": 1998, "propertyType": "SINGLE_FAMILY", "status": "for_sale",
+    "basement": true, "parking": true,
+    "photos": ["https://picsum.photos/seed/2078230001/640/480"],
+    "listingUrl": "https://www.zillow.com/homedetails/2078230001",
+    "description": "Charming single-family home close to the 7 train."
+  },
+  {
+    "zpid": "2078230002",
+    "address": { "line1": "45 Baxter Ave", "city": "Elmhurst", "state": "NY", "zip": "11373" },
+    "price": 399000,
+    "bedrooms": 2, "bathrooms": 1, "livingArea": 950, "lotSize": 1800,
+    "yearBuilt": 1975, "propertyType": "CONDO", "status": "for_sale",
+    "basement": false, "parking": false,
+    "photos": ["https://picsum.photos/seed/2078230002/640/480"],
+    "listingUrl": "https://www.zillow.com/homedetails/2078230002",
+    "description": "Cozy 2-bedroom condo, recently renovated kitchen."
+  },
+  {
+    "zpid": "2078230003",
+    "address": { "line1": "88 Cornish Ave", "city": "Elmhurst", "state": "NY", "zip": "11373" },
+    "price": 725000,
+    "bedrooms": 4, "bathrooms": 3, "livingArea": 2100, "lotSize": 3200,
+    "yearBuilt": 2005, "propertyType": "SINGLE_FAMILY", "status": "for_sale",
+    "basement": true, "parking": true,
+    "photos": ["https://picsum.photos/seed/2078230003/640/480"],
+    "listingUrl": "https://www.zillow.com/homedetails/2078230003",
+    "description": "Spacious 4-bedroom with finished basement."
+  },
+  {
+    "zpid": "2078230004",
+    "address": { "line1": "12 Whitney Ave", "city": "Elmhurst", "state": "NY", "zip": "11373" },
+    "price": 550000,
+    "bedrooms": 1, "bathrooms": 1, "livingArea": 700, "lotSize": 0,
+    "yearBuilt": 2018, "propertyType": "CONDO", "status": "pending",
+    "basement": false, "parking": false,
+    "photos": ["https://picsum.photos/seed/2078230004/640/480"],
+    "listingUrl": "https://www.zillow.com/homedetails/2078230004",
+    "description": "Modern studio, sale pending."
+  },
+  {
+    "zpid": "3091140001",
+    "address": { "line1": "7 Franklin Turnpike", "city": "Ridgewood", "state": "NJ", "zip": "07069" },
+    "price": 610000,
+    "bedrooms": 3, "bathrooms": 2, "livingArea": 1700, "lotSize": 4000,
+    "yearBuilt": 1988, "propertyType": "SINGLE_FAMILY", "status": "for_sale",
+    "basement": true, "parking": true,
+    "photos": ["https://picsum.photos/seed/3091140001/640/480"],
+    "listingUrl": "https://www.zillow.com/homedetails/3091140001",
+    "description": "3-bedroom colonial with large backyard."
+  },
+  {
+    "zpid": "3091140002",
+    "address": { "line1": "22 Passaic St", "city": "Ridgewood", "state": "NJ", "zip": "07069" },
+    "price": 780000,
+    "bedrooms": 4, "bathrooms": 3, "livingArea": 2300, "lotSize": 5000,
+    "yearBuilt": 1995, "propertyType": "SINGLE_FAMILY", "status": "for_sale",
+    "basement": true, "parking": true,
+    "photos": ["https://picsum.photos/seed/3091140002/640/480"],
+    "listingUrl": "https://www.zillow.com/homedetails/3091140002",
+    "description": "4-bedroom with updated kitchen and 2-car garage."
+  },
+  {
+    "zpid": "3091140003",
+    "address": { "line1": "5 Godwin Ave", "city": "Ridgewood", "state": "NJ", "zip": "07069" },
+    "price": 425000,
+    "bedrooms": 2, "bathrooms": 1, "livingArea": 1100, "lotSize": 2200,
+    "yearBuilt": 1962, "propertyType": "TOWNHOUSE", "status": "for_sale",
+    "basement": false, "parking": true,
+    "photos": ["https://picsum.photos/seed/3091140003/640/480"],
+    "listingUrl": "https://www.zillow.com/homedetails/3091140003",
+    "description": "Move-in ready 2-bedroom townhouse."
+  },
+  {
+    "zpid": "4051190001",
+    "address": { "line1": "300 W 23rd St", "city": "New York", "state": "NY", "zip": "10001" },
+    "price": 950000,
+    "bedrooms": 1, "bathrooms": 1, "livingArea": 650, "lotSize": 0,
+    "yearBuilt": 2010, "propertyType": "CONDO", "status": "for_sale",
+    "basement": false, "parking": false,
+    "photos": ["https://picsum.photos/seed/4051190001/640/480"],
+    "listingUrl": "https://www.zillow.com/homedetails/4051190001",
+    "description": "1-bedroom condo with city views and doorman."
+  },
+  {
+    "zpid": "4051190002",
+    "address": { "line1": "245 7th Ave", "city": "New York", "state": "NY", "zip": "10001" },
+    "price": 1450000,
+    "bedrooms": 2, "bathrooms": 2, "livingArea": 1100, "lotSize": 0,
+    "yearBuilt": 2015, "propertyType": "CONDO", "status": "for_sale",
+    "basement": false, "parking": true,
+    "photos": ["https://picsum.photos/seed/4051190002/640/480"],
+    "listingUrl": "https://www.zillow.com/homedetails/4051190002",
+    "description": "2-bedroom, 2-bath condo in Chelsea."
+  },
+  {
+    "zpid": "4051190003",
+    "address": { "line1": "150 W 20th St", "city": "New York", "state": "NY", "zip": "10001" },
+    "price": 2100000,
+    "bedrooms": 3, "bathrooms": 2, "livingArea": 1600, "lotSize": 0,
+    "yearBuilt": 2019, "propertyType": "CONDO", "status": "for_sale",
+    "basement": false, "parking": true,
+    "photos": ["https://picsum.photos/seed/4051190003/640/480"],
+    "listingUrl": "https://www.zillow.com/homedetails/4051190003",
+    "description": "3-bedroom luxury condo with private balcony."
+  },
+  {
+    "zpid": "5061200001",
+    "address": { "line1": "88 Court St", "city": "Brooklyn", "state": "NY", "zip": "11201" },
+    "price": 890000,
+    "bedrooms": 2, "bathrooms": 1, "livingArea": 1050, "lotSize": 0,
+    "yearBuilt": 1930, "propertyType": "CONDO", "status": "sold",
+    "basement": false, "parking": false,
+    "photos": ["https://picsum.photos/seed/5061200001/640/480"],
+    "listingUrl": "https://www.zillow.com/homedetails/5061200001",
+    "description": "Pre-war 2-bedroom, recently sold."
+  },
+  {
+    "zpid": "5061200002",
+    "address": { "line1": "120 Montague St", "city": "Brooklyn", "state": "NY", "zip": "11201" },
+    "price": 1150000,
+    "bedrooms": 3, "bathrooms": 2, "livingArea": 1400, "lotSize": 0,
+    "yearBuilt": 1925, "propertyType": "CONDO", "status": "pending",
+    "basement": false, "parking": false,
+    "photos": ["https://picsum.photos/seed/5061200002/640/480"],
+    "listingUrl": "https://www.zillow.com/homedetails/5061200002",
+    "description": "3-bedroom brownstone conversion, sale pending."
+  }
+]
