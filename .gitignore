@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.netlify/
+
+.env
+.env.local
+.env.*.local
+
+.claude/settings.local.json
+
+.DS_Store
+npm-debug.log*
