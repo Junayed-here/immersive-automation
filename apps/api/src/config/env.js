@@ -1,19 +1,18 @@
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// On Netlify, esbuild bundles this whole module graph into one output file
-// that physically replaces netlify/functions/<name>.mjs - confirmed live: a
-// deployed run crashed with `ENOENT ... '/data/listings.json'`, proving
-// process.cwd() there is '/', not /var/task as commonly assumed elsewhere.
-// import.meta.url is rewritten by the bundler to that output file's real
-// location though, and every function here (api/drain/scheduler) sits at
-// the same fixed depth under /var/task, so walking up 4 directories from
-// wherever this bundle actually landed reliably reaches the repo root that
-// netlify.toml's `included_files` bundled data/listings.json into.
-const NETLIFY_REPO_ROOT = fileURLToPath(new URL('../../../../', import.meta.url));
+// A deployed run crashed with `ENOENT ... '/data/listings.json'`, proving
+// process.cwd() there is '/', not /var/task as commonly assumed - so that's
+// out. import.meta.url (tried next) also isn't safe: Netlify's bundler
+// doesn't consistently produce ESM output (one deploy wrapped this in a CJS
+// require() shim, where import.meta doesn't exist at all, crashing every
+// request). /var/task is the one constant every AWS-Lambda-based platform
+// (Netlify Functions included) uses as the deployment package root
+// regardless of module format or how esbuild happened to bundle this run -
+// hardcoding it has fewer moving parts than deriving it dynamically.
+const NETLIFY_REPO_ROOT = '/var/task';
 
 const required = ['DATABASE_URL', 'JWT_SECRET', 'LINK_SECRET'];
 
